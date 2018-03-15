@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Websocket</title>
+    <style>
+        .form-control{
+            width: 200px;
+            height: 50px;
+            background-color: #f5f5f5;
+        }
+        .btn{
+            background-color: #f04848;
+            width: 50px;
+            height: 50px;
+        }
+        ul li{
+            width: 300px;
+            height: 50px;
+        }
+        .label-danger{
+            background-color: #f04848;
+        }
+        .label-success{
+            background-color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-group">
+        <input class="form-control" type="text" name="message" id="message"
+               placeholder="Type text to echo in here" value="" />
+    </div>
+    <button type="button" id="send" class="btn btn-primary">
+        Send!
+    </button>
+    <ul>
+        <li id="AAPL">AAPL <span></span></li>
+        <li id="MSFT">MSFT <span></span></li>
+        <li id="AMZN">AMZN <span></span></li>
+        <li id="GOOG">GOOG <span></span></li>
+        <li id="YHOO">YHOO <span></span></li>
+    </ul>
+<script type="text/javascript" src="https://res.smzdm.com/resources/public/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript">
+    var ws = new WebSocket("ws://localhost:8181");
+
+    // ws.onopen = function (e) {
+    //     console.log('Connection to server opened');
+    // }
+    // function sendMessage() {
+    //     ws.send(document.getElementById('message').value);
+    // }
+
+    var isClose = false;
+    var stocks = {
+        "AAPL": 0, "MSFT": 0, "AMZN": 0, "GOOG": 0, "YHOO": 0
+    };
+    function updataUI() {
+        ws.onopen = function (e) {
+            console.log('Connection to server opened');
+            isClose = false;
+            ws.send(JSON.stringify(stocks));
+            console.log("sened a mesg");
+        }
+        //更新UI
+        var changeStockEntry = function (symbol, originalValue, newValue) {
+            var valElem = $('#' + symbol + ' span');
+            valElem.html(newValue.toFixed(2));
+            if (newValue < originalValue) {
+                valElem.addClass('label-danger');
+                valElem.removeClass('label-success');
+            } else if (newValue > originalValue) {
+                valElem.addClass('label-success');
+                valElem.removeClass('label-danger');
+            }
+        }
+        // 处理受到的消息
+        ws.onmessage = function (e) {
+            var stocksData = JSON.parse(e.data);
+            console.log('onmessage:', stocksData);
+            for (var symbol in stocksData) {
+                if (stocksData.hasOwnProperty(symbol)) {
+                    changeStockEntry(symbol, stocks[symbol], stocksData[symbol]);
+                    stocks[symbol] = stocksData[symbol];
+                }
+            }
+        };
+    }
+
+    updataUI();
+</script>
+</body>
+</html>
